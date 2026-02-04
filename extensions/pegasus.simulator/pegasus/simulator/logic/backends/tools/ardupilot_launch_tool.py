@@ -19,7 +19,7 @@ class ArduPilotLaunchTool:
     Ardupilot was already built with 'make ardupilot_sitl_default none'), the vehicle id and the vehicle model. 
     """
 
-    def __init__(self, ardupilot_dir, vehicle="ArduPlane", vehicle_id: int = 0, ardupilot_model: str = "gazebo-iris"):
+    def __init__(self, ardupilot_dir, vehicle_id: int = 0, ardupilot_vehicle: str = "ArduCopter", ardupilot_model: str = "gazebo-iris"):
         """Construct the ArduPilotLaunchTool object
 
         Args:
@@ -40,6 +40,7 @@ class ArduPilotLaunchTool:
 
         # Ardupilot frame
         self.ardupilot_model = ardupilot_model
+        self.ardupilot_vehicle = ardupilot_vehicle
 
         # Ardupilot FDM communication type:
         self.model = "JSON"
@@ -50,12 +51,13 @@ class ArduPilotLaunchTool:
         # Set the environement variables that let Ardupilot know which vehicle model to use internally
         self.environment = os.environ
 
-        # Set the vehicle type ArduCopter/ArduPlane
-        self.vehicle = vehicle
 
     def _sitl_already_exists(self):
         return os.path.exists(f'{self.ardupilot_dir}/build/sitl/bin/arducopter')
     
+    def _get_vehicle(self):
+        return self.ardupilot_vehicle
+
     def _get_vehicle_frame(self):
         return self.ardupilot_model
     
@@ -65,18 +67,21 @@ class ArduPilotLaunchTool:
         """
         command = [
             "python3", f"{self.ardupilot_dir}/Tools/autotest/sim_vehicle.py",
-            "-v", f"{self.vehicle}",
+            "-v", f"{self._get_vehicle()}",
             "-f", f"{self._get_vehicle_frame()}",
             "--model", f"{self.model}",
             f"{'--no-rebuild' if self._sitl_already_exists() else ''}",
             "--console",
             "--map",
             "-I", f"{self.vehicle_id}",
-            "--sysid", f"{self.vehicle_id + 1}",
-            "--out", f"udp:127.0.0.1:{14550 + self.vehicle_id * 10}",
+            "--sysid", f"{int(self.vehicle_id) + 1}",
+            # "--sysid", f"{1}",
+            "--out", f"udp:127.0.0.1:{14550 + int(self.vehicle_id) * 10}",
             # "--cmd", "param set ARMING_CHECK 0"
         ]
+
         command_str = " ".join(command)
+        print(f"\n\n @ ArduLaunch\ncommand : {command_str}")
         
         clean_env = self.environment.copy()
         

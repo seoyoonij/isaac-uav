@@ -116,7 +116,7 @@ class FixedWingConfig:
         # BACKENDS
         # ============================================
         # Control backend (Mavlink, ROS2, or custom)
-        self.backends = [ArduPilotMavlinkBackend(config=ArduPilotMavlinkBackendConfig())]
+        self.backends = []
 
 
 class FixedWing(Vehicle):
@@ -242,20 +242,20 @@ class FixedWing(Vehicle):
         aero_forces, aero_moments = self._calculate_aerodynamics()
         
         # 4. Apply propeller thrust (in body frame, pointing forward)
-        self.apply_force([thrust_force, 0.0, 0.0], body_part="/blendeuav_nowheels/body")
+        self.apply_force([thrust_force, 0.0, 0.0], body_part="/body")
         
         # 5. Apply aerodynamic forces
-        self.apply_force(aero_forces, body_part="/blendeuav_nowheels/body")
+        self.apply_force(aero_forces, body_part="/body")
         
         # 6. Apply aerodynamic moments
-        self.apply_torque(aero_moments, body_part="/blendeuav_nowheels/body")
+        self.apply_torque(aero_moments, body_part="/body")
         
         # 7. Apply drag
         drag_force = self._drag.update(self._state, dt)
-        self.apply_force(drag_force, body_part="/blendeuav_nowheels/body")
+        self.apply_force(drag_force, body_part="/body")
         
         # 8. Update propeller visual (if you have a revolute joint named "propeller" or "joint0")
-        self._update_propeller_visual()
+        # self._update_propeller_visual()
         
         # 9. Update backends
         for backend in self._backends:
@@ -414,24 +414,25 @@ class FixedWing(Vehicle):
         USD dosyanızda pervanenin bağlı olduğu joint'in adını bulup buraya yazmanız gerekecek
         Örnek: "propeller_joint", "joint0", "prop_joint" vb.
         """
-        try:
-            articulation = self.get_dc_interface().get_articulation(self._stage_prefix)
+        pass
+        # try:
+        #     articulation = self.get_dc_interface().get_articulation(self._stage_prefix)
             
-            # ÖNEMLİ: USD dosyanızdaki pervane joint'inin ismini buraya yazın
-            # Örnek joint isimleri: "propeller_joint", "joint0", "prop_joint"
-            propeller_joint_name = "blendeuav_nowheels/body/servo_001"  # BUNU KENDİ USD DOSYANIZA GÖRE DEĞİŞTİRİN
+        #     # ÖNEMLİ: USD dosyanızdaki pervane joint'inin ismini buraya yazın
+        #     # Örnek joint isimleri: "propeller_joint", "joint0", "prop_joint"
+        #     propeller_joint_name = "/body/servo_001"  # BUNU KENDİ USD DOSYANIZA GÖRE DEĞİŞTİRİN
             
-            joint = self.get_dc_interface().find_articulation_dof(articulation, propeller_joint_name)
+        #     joint = self.get_dc_interface().find_articulation_dof(articulation, propeller_joint_name)
             
-            if joint is not None:
-                # RPM'den angular velocity'ye (rad/s)
-                rpm = self._throttle * self._prop_max_rpm
-                angular_vel = (rpm * 2 * np.pi / 60.0) * self._prop_rotation_dir
+        #     if joint is not None:
+        #         # RPM'den angular velocity'ye (rad/s)
+        #         rpm = self._throttle * self._prop_max_rpm
+        #         angular_vel = (rpm * 2 * np.pi / 60.0) * self._prop_rotation_dir
                 
-                self.get_dc_interface().set_dof_velocity(joint, angular_vel)
-        except Exception as e:
-            # Joint bulunamazsa veya hata olursa sessizce geç
-            pass
+        #         self.get_dc_interface().set_dof_velocity(joint, angular_vel)
+        # except Exception as e:
+        #     # Joint bulunamazsa veya hata olursa sessizce geç
+        #     pass
 
     def set_control_inputs(self, throttle=None, elevator=None, aileron=None, rudder=None):
         """

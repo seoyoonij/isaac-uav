@@ -42,3 +42,6 @@ _build
 build/
 install/
 log/
+
+# garbage
+tmp

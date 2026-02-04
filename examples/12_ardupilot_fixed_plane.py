@@ -21,7 +21,7 @@ import omni.timeline
 from omni.isaac.core.world import World
 
 # Import the Pegasus API for simulating vehicles
-from pegasus.simulator.params import SIMULATION_ENVIRONMENTS
+from pegasus.simulator.params import SIMULATION_ENVIRONMENTS, ROBOTS
 from pegasus.simulator.logic.backends.ardupilot_mavlink_backend import (
     ArduPilotMavlinkBackend, ArduPilotMavlinkBackendConfig
 )
@@ -83,9 +83,6 @@ class FixedWingApp:
         # ============================================
         config = FixedWingConfig()
         
-        # USD file path - IMPORTANT: Update this to your aircraft model!
-        config.usd_file = "/home/mert/isaac_sim_uav/extensions/pegasus.simulator/pegasus/simulator/assets/Robots/yoda_fixed_wing/yoda_fixed_wing.usd"  # ← BURAYA KENDİ USD DOSYA YOLUNUZU YAZIN
-        
         # Propeller/Motor settings
         config.prop_max_thrust = 75.0          # Maximum thrust in Newtons
         config.prop_max_rpm = 10000.0          # Maximum RPM
@@ -109,24 +106,14 @@ class FixedWingApp:
         config.Cn_rudder = -0.05               # Rudder yaw moment
         
         # ============================================
-        # BACKEND CONFIGURATION - PX4 MAVLINK
-        # ============================================  
-        '''
-        ardupilot_config = ArduPilotMavlinkBackendConfig({
-            "vehicle_id": 0,
-            "px4_autolaunch": True,                    # Auto-launch PX4 SITL
-            "px4_dir": self.pg.px4_path,               # PX4 directory path
-            "px4_vehicle_model": "ArduPlane"               # PX4 plane model
-        })
-        '''
-        # ============================================
         # ALTERNATIVE: ARDUPILOT BACKEND (Uncomment to use)
         # ============================================
         ardupilot_config = ArduPilotMavlinkBackendConfig({
             "vehicle_id": 0,
             "ardupilot_autolaunch": True,
             "ardupilot_dir": self.pg.ardupilot_path,
-            "ardupilot_vehicle_model": "gazebo-zephyr"  # or "plane"
+            "ardupilot_vehicle_model": "plane",
+            "ardupilot_vehicle" : "ArduPlane"
         })
         
         # ============================================
@@ -143,9 +130,8 @@ class FixedWingApp:
         
         # Combine backends
         config.backends = [
-            #PX4MavlinkBackend(config=px4_config),
             ArduPilotMavlinkBackend(config=ardupilot_config),  # Uncomment for Ardupilot
-            ROS2Backend(vehicle_id=0, config=ros2_config)        # Optional ROS2
+            # ROS2Backend(vehicle_id=0, config=ros2_config)        # Optional ROS2
         ]
         
         # ============================================
@@ -153,9 +139,9 @@ class FixedWingApp:
         # ============================================
         self.aircraft = FixedWing(
             stage_prefix="/World/fixedwing0",
-            usd_file=config.usd_file,
+            usd_file=ROBOTS['fixed_wing'],
             vehicle_id=0,
-            init_pos=[0.0, 0.0, 0.5],                    # Start 0.5m above ground
+            init_pos=[0.0, 0.0, 0.2],                    # Start 0.5m above ground
             init_orientation=Rotation.from_euler("XYZ", [0.0, 0.0, 0.0], degrees=True).as_quat(),
             config=config
         )

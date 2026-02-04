@@ -228,6 +228,7 @@ class ArduPilotMavlinkBackendConfig(BackendConfig):
             >>>  "ardupilot_autolaunch": True,
             >>>  "ardupilot_dir": "PegasusInterface().ardupilot_path",
             >>>  "ardupilot_vehicle_model": "gazebo-iris",
+            >>>  "ardupilot_vehicle": "ArduCopter",
             >>>  "enable_lockstep": True,
             >>>  "num_rotors": 4,
             >>>  "input_offset": [0.0, 0.0, 0.0, 0.0],
@@ -239,6 +240,7 @@ class ArduPilotMavlinkBackendConfig(BackendConfig):
 
         # Configurations for the mavlink communication protocol (note: the vehicle id is sumed to the connection_baseport)
         self.vehicle_id = config.get("vehicle_id", 0)
+
         self.connection_type = config.get("connection_type", "udpin")  # TODO working
         # self.connection_type = config.get("connection_type", "tcp")
         self.connection_ip = config.get("connection_ip", "127.0.0.1")  # TODO working
@@ -256,6 +258,7 @@ class ArduPilotMavlinkBackendConfig(BackendConfig):
         self.ardupilot_vehicle_model: str = config.get(
             "ardupilot_vehicle_model", "gazebo-iris"
         )
+        self.ardupilot_vehicle = config.get("ardupilot_vehicle", "ArduCopter")
 
         # Configurations to interpret the rotors control messages coming from mavlink
         self.enable_lockstep: bool = config.get("enable_lockstep", False)
@@ -314,6 +317,7 @@ class ArduPilotMavlinkBackend(Backend):
 
         # Check if we need to autolaunch ArduPilot in the background or not
         self.ardupilot_autolaunch: bool = config.ardupilot_autolaunch
+        self.ardupilot_vehicle: str = config.ardupilot_vehicle
         self.ardupilot_vehicle_model: str = (
             config.ardupilot_vehicle_model
         )  # only needed if ardupilot_autolaunch == True
@@ -581,11 +585,11 @@ class ArduPilotMavlinkBackend(Backend):
 
         # Launch the ArduPilot in the background if needed
         if self.ardupilot_autolaunch and self.ardupilot_tool is None:
-            carb.log_warn(
+            carb.log_info(
                 f"[ArduPilotMavlinkBackend] About to call launch_ardupilot() with dir={self.ardupilot_dir}, id={self._vehicle_id}, model={self.ardupilot_vehicle_model}"
             )
             self.ardupilot_tool = ArduPilotLaunchTool(
-                self.ardupilot_dir, self._vehicle_id, self.ardupilot_vehicle_model
+                ardupilot_dir=self.ardupilot_dir, vehicle_id=self._vehicle_id, ardupilot_vehicle=self.ardupilot_vehicle, ardupilot_model=self.ardupilot_vehicle_model
             )
             self.ardupilot_tool.launch_ardupilot()
 

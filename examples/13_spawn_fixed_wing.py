@@ -14,7 +14,7 @@ import os
 base_folder = "../extensions/pegasus.simulator/pegasus/simulator/assets/Robots/yoda_fixed_wing"
 
 # UAV Files
-main_usd_path = f"{base_folder}/yoda_fixed_wing.usd"
+main_usd_path = f"{base_folder}/yoda_fixed_wing_flattened.usd"
 dependency_path = f"{base_folder}/yoda_fixed_wing.usdc"
 
 # LOCATE ENVIRONMENT FROM ISAAC SIM SERVER
@@ -30,15 +30,15 @@ else:
     print(f"Environment found: {env_usd_path}")
 
 # We are fixing the incorrect hardcoded path inside the UAV file in memory
-print("Repairing UAV file in memory...")
-layer = Sdf.Layer.FindOrOpen(main_usd_path)
-if layer:
-    for prim_spec in layer.rootPrims:
-        if prim_spec.hasReferences:
-            # Clear old references and add the correct local path
-            prim_spec.referenceList.ClearReferences()
-            prim_spec.referenceList.AddReference(dependency_path)
-            break
+# print("Repairing UAV file in memory...")
+# layer = Sdf.Layer.FindOrOpen(main_usd_path)
+# if layer:
+#     for prim_spec in layer.rootPrims:
+#         if prim_spec.hasReferences:
+#             # Clear old references and add the correct local path
+#             prim_spec.referenceList.ClearReferences()
+#             prim_spec.referenceList.AddReference(dependency_path)
+#             break
 
 # SETUP THE SCENE
 world = World()

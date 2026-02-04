@@ -73,6 +73,7 @@ class Vehicle(Robot):
         # Save the name with which the vehicle will appear in the stage
         # and the name of the .usd file that contains its description
         self._stage_prefix = get_stage_next_free_path(self._current_stage, stage_prefix, False)
+        print(f"\n@ Vehicle: {self._stage_prefix}")
         self._usd_file = usd_path
 
         # Get the vehicle name by taking the last part of vehicle stage prefix
@@ -82,6 +83,7 @@ class Vehicle(Robot):
         self._prim = define_prim(self._stage_prefix, "Xform")
         self._prim = get_prim_at_path(self._stage_prefix)
         self._prim.GetReferences().AddReference(self._usd_file)
+        # print(f"\n@ Vehicle: {self._prim}")
 
         # Initialize the "Robot" class
         # Note: we need to change the rotation to have qw first, because NVidia
@@ -296,6 +298,7 @@ class Vehicle(Robot):
 
         # Get the attitude according to the convention [w, x, y, z]
         prim = self._world.stage.GetPrimAtPath(self._stage_prefix + "/body")
+        # Iterate through every prim on the stage
         rotation_quat = get_world_transform_xform(prim).GetQuaternion()
         rotation_quat_real = rotation_quat.GetReal()
         rotation_quat_img = rotation_quat.GetImaginary()
