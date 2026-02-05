@@ -60,7 +60,7 @@ class FixedWingApp:
 
         # Load simulation environment
         # Options: "Curved Gridroom", "Default Environment", "Black Gridroom", "Hospital", "Office", "Warehouse"
-        self.pg.load_environment(SIMULATION_ENVIRONMENTS["Curved Gridroom"])
+        self.pg.load_environment(SIMULATION_ENVIRONMENTS["Default Environment"])
 
         # Create the fixed-wing aircraft
         self.create_fixedwing_vehicle()
@@ -139,9 +139,9 @@ class FixedWingApp:
         # ============================================
         self.aircraft = FixedWing(
             stage_prefix="/World/fixedwing0",
-            usd_file=ROBOTS['fixed_wing'],
+            usd_file=ROBOTS['Fixed Wing'],
             vehicle_id=0,
-            init_pos=[0.0, 0.0, 0.2],                    # Start 0.5m above ground
+            init_pos=[0.0, 0.0, 0.2],                    # Start 0.2m above ground
             init_orientation=Rotation.from_euler("XYZ", [0.0, 0.0, 0.0], degrees=True).as_quat(),
             config=config
         )

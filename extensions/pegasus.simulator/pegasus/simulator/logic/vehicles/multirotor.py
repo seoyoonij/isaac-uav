@@ -20,6 +20,9 @@ from pegasus.simulator.logic.dynamics import LinearDrag
 from pegasus.simulator.logic.thrusters import QuadraticThrustCurve
 from pegasus.simulator.logic.sensors import Barometer, IMU, Magnetometer, GPS
 
+# logging
+import carb
+
 class MultirotorConfig:
     """
     A data class that is used for configuring a Multirotor
@@ -95,6 +98,11 @@ class Multirotor(Vehicle):
         """In this case we do not need to do anything extra when the simulation stops"""
         pass
 
+    def update2(self, dt: float):
+        self.apply_force([0.0, 0.0, 30], body_part="/body")
+        for backend in self._backends:
+            backend.update(dt)
+
     def update(self, dt: float):
         """
         Method that computes and applies the forces to the vehicle in simulation based on the motor speed. 
@@ -115,6 +123,7 @@ class Multirotor(Vehicle):
             desired_rotor_velocities = [0.0 for i in range(self._thrusters._num_rotors)]
 
         # Input the desired rotor velocities in the thruster model
+        carb.log_info(f"\n\n@ Multirotor \n Control Inputs : {desired_rotor_velocities}")
         self._thrusters.set_input_reference(desired_rotor_velocities)
 
         # Get the desired forces to apply to the vehicle

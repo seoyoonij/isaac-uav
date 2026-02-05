@@ -262,6 +262,7 @@ class Vehicle(Robot):
 
         # Get the handle of the rigidbody that we will apply the force to
         rb = self.get_dc_interface().get_rigid_body(self._stage_prefix + body_part)
+        carb.log_info(f"Applying force to '{self._stage_prefix + body_part}', F = {force}, At = {pos}")
 
         # Apply the force to the rigidbody. The force should be expressed in the rigidbody frame
         self.get_dc_interface().apply_body_force(rb, carb._carb.Float3(force), carb._carb.Float3(pos), False)

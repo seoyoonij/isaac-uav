@@ -177,7 +177,10 @@ class ThrusterControl:
         """
 
         # Check if the number of controls received is correct
+        carb.log_info("\n\n--- ThrusterControl @ Updating Input Reference ---")
         servos = pwms[: self.num_rotors]
+        carb.log_info(f"Servos: ({servos}), NumRotors: ({self.num_rotors})")
+        carb.log_info(f"InputScalers: ({self.input_scaling}), InputOffseters: ({self.input_offset})")
 
         if len(servos) < self.num_rotors:
             carb.log_warn("Did not receive enough inputs for all the rotors")
@@ -707,9 +710,11 @@ class ArduPilotMavlinkBackend(Backend):
                         self._armed = False
 
     def update_motor_commands(self, servos):
-        if self._armed and servos != ():
+        if self._armed and len(servos) != 0:
+            carb.log_info(f"Update Servos: {servos}")
             self._rotor_data.update_input_reference(servos)
         else:
+            carb.log_warn(f"Zero servo input ! \n Servos : {servos} \n DroneArm: {self._armed}")
             self._rotor_data.zero_input_reference()
 
     def send_heartbeat(self, mav_type=mavutil.mavlink.MAV_TYPE_GENERIC):

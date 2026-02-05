@@ -29,7 +29,8 @@ ROBOTS_ASSETS = ASSET_PATH + "/Robots"
 
 # Define the built in robots of the extension
 ROBOTS = {"Iris": ROBOTS_ASSETS + "/Iris/iris.usd",
-          "fixed_wing": ROBOTS_ASSETS + "/yoda_fixed_wing/yoda_fixed_wing_flattened.usd"} #, "Flying Cube": ROBOTS_ASSETS + "/iris_cube.usda"}
+          "Fixed Wing": ROBOTS_ASSETS + "/yoda_fixed_wing/yoda_fixed_wing_flattened.usd",
+          "Flying Cube": ROBOTS_ASSETS + "/yoda_fixed_wing/cube.usd"}
 
 # Setup the default simulation environments path
 NVIDIA_ASSETS_PATH = str(nucleus.get_assets_root_path())

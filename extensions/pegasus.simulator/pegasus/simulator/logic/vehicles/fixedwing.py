@@ -22,6 +22,8 @@ from pegasus.simulator.logic.sensors import Barometer, IMU, Magnetometer, GPS
 # Dynamics
 from pegasus.simulator.logic.dynamics import LinearDrag
 
+# Log
+import carb
 
 class FixedWingConfig:
     """
@@ -230,32 +232,35 @@ class FixedWing(Vehicle):
         """
         if not self._prim.IsValid():
             return
-
         
         # 1. Get control inputs from backend
         self._update_control_inputs()
         
         # 2. Calculate propeller thrust
         thrust_force = self._calculate_propeller_thrust()
+        carb.log_info(f"Calculated Thrust: {thrust_force}")
         
         # 3. Calculate aerodynamic forces and moments
         aero_forces, aero_moments = self._calculate_aerodynamics()
+        carb.log_info(f"Calculated force: {aero_forces}")
+        carb.log_info(f"Calculated moment: {aero_moments}")
         
         # 4. Apply propeller thrust (in body frame, pointing forward)
-        self.apply_force([thrust_force, 0.0, 0.0], body_part="/body")
+        self.apply_force([0.0, -thrust_force * 10, 0.0], body_part="/body")
+        # self.apply_force([0.0, 0.0, 10000.0], body_part="/body")
         
-        # 5. Apply aerodynamic forces
+        # # 5. Apply aerodynamic forces
         self.apply_force(aero_forces, body_part="/body")
         
-        # 6. Apply aerodynamic moments
+        # # 6. Apply aerodynamic moments
         self.apply_torque(aero_moments, body_part="/body")
         
-        # 7. Apply drag
+        # # 7. Apply drag
         drag_force = self._drag.update(self._state, dt)
         self.apply_force(drag_force, body_part="/body")
         
         # 8. Update propeller visual (if you have a revolute joint named "propeller" or "joint0")
-        # self._update_propeller_visual()
+        self._update_propeller_visual()
         
         # 9. Update backends
         for backend in self._backends:
@@ -263,41 +268,49 @@ class FixedWing(Vehicle):
             
 
     def _update_control_inputs(self):
-        """
-        Updates control surface positions from the backend
-        BURADA KENDİ BACKEND YAPISINA GÖRE DÜZENLEME YAPMANIZ GEREKEBİLİR
-        """
         if len(self._backends) != 0:
-            # Backend'den kontrol komutlarını al
-            # PX4 Mavlink kullanıyorsanız, bu format farklı olabilir
-            # Örnek: servo output'larını veya PWM değerlerini alın
+            # Raw inputs from backend (seem to be PWM - 900 based on logs)
+            raw_inputs = self._backends[0].input_reference()
             
-            # ÖNEMLİ: Bu kısmı kendi backend yapınıza göre düzenlemeniz gerekecek
-            # Şu an genel bir örnek:
-            control_inputs = self._backends[0].input_reference()
+            # Helper to normalize: (Value - Center) / Half_Range
+            # We map the observed raw values back to -1..1 or 0..1
             
-            # Control inputs format'ı backend'e göre değişir
-            # Örnek mapping (kendi sisteminize göre ayarlayın):
-            if isinstance(control_inputs, list) and len(control_inputs) >= 4:
-                self._throttle = np.clip(control_inputs[0], 0.0, 1.0)
-                self._elevator = np.clip(control_inputs[1], -1.0, 1.0)
-                self._aileron = np.clip(control_inputs[2], -1.0, 1.0)
-                self._rudder = np.clip(control_inputs[3], -1.0, 1.0)
+            # Aileron: Center ~600 (1500 PWM). Range +/- 500
+            # Result: -1.0 to 1.0
+            self._aileron = (raw_inputs[0] - 600.0) / 500.0
+            
+            # Elevator: Center ~600 (1500 PWM). Range +/- 500
+            # Result: -1.0 to 1.0
+            self._elevator = (raw_inputs[1] - 600.0) / 500.0
+            
+            # Throttle: Min ~100 (1000 PWM). Range 1000
+            # Result: 0.0 to 1.0
+            self._throttle = (raw_inputs[2] - 100.0) / 1000.0
+            
+            # Rudder: Center ~600 (1500 PWM). Range +/- 500
+            # Result: -1.0 to 1.0
+            self._rudder = (raw_inputs[3] - 600.0) / 500.0
+
+            # Safety Clamping
+            self._aileron = np.clip(self._aileron, -1.0, 1.0)
+            self._elevator = np.clip(self._elevator, -1.0, 1.0)
+            self._throttle = np.clip(self._throttle, 0.0, 1.0)
+            self._rudder = np.clip(self._rudder, -1.0, 1.0)
+
+            carb.log_info(
+                f"FixedWing Norm Inputs -> Ail: {self._aileron:.2f}, "
+                f"Ele: {self._elevator:.2f}, "
+                f"Thr: {self._throttle:.2f}, "
+                f"Rud: {self._rudder:.2f}"
+            )
+            
         else:
-            # Backend yoksa, sıfır input
+            carb.log_warn("No backend detected @ fixedwing. Control inputs set to 0.")
             self._throttle = 0.0
             self._elevator = 0.0
             self._aileron = 0.0
             self._rudder = 0.0
-        # Eğer backend'iniz dictionary dönüyorsa:
-        # ...
-        '''
-        # Eğer PWM değerleri geliyorsa (1000-2000):
-        pwm_values = self._backends[0].input_reference()
-        self._throttle = (pwm_values[0] - 1000) / 1000.0  # Normalize to 0-1
-        self._elevator = (pwm_values[1] - 1500) / 500.0   # Normalize to -1 to 1
-        # ...
-        '''
+
     def _calculate_propeller_thrust(self) -> float:
         """
         Calculates thrust force from propeller based on throttle input
@@ -332,33 +345,44 @@ class FixedWing(Vehicle):
         
         # Total airspeed
         V = np.linalg.norm(V_body)
+
+        carb.log_info(f"\n\n--- Aerodynamics Cycle Start ---")
+        carb.log_info(f"Input V_body: [u={u:.4f}, v={v:.4f}, w={w:.4f}], Total V={V:.4f}")
         
         # Avoid division by zero
         if V < 0.1:
+            carb.log_info("Speed too low (< 0.1), returning zero forces/moments.")
             return np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0])
         
         # Calculate angle of attack (alpha) and sideslip (beta)
         alpha = np.arctan2(w, u)  # radians
         beta = np.arcsin(np.clip(v / V, -1.0, 1.0))  # radians
+
+        carb.log_info(f"Angles: Alpha={np.degrees(alpha):.4f} deg ({alpha:.4f} rad), "
+                    f"Beta={np.degrees(beta):.4f} deg ({beta:.4f} rad)")
         
         # Dynamic pressure
         q = 0.5 * self._air_density * V**2
+        carb.log_info(f"Dynamic Pressure (q): {q:.4f} Pa (rho={self._air_density})")
         
         # ==========================================
         # LIFT COEFFICIENT
         # ==========================================
-        CL = self._CL_0 + self._CL_alpha * alpha + self._CL_elevator * self._elevator
-        CL = np.clip(CL, self._CL_min, self._CL_max)  # Stall limits
+        CL_raw = self._CL_0 + self._CL_alpha * alpha + self._CL_elevator * self._elevator
+        CL = np.clip(CL_raw, self._CL_min, self._CL_max)  # Stall limits
+        carb.log_info(f"Coeff Lift (CL): {CL:.4f} (Raw: {CL_raw:.4f}, Control: {self._elevator})")
         
         # ==========================================
         # DRAG COEFFICIENT
         # ==========================================
         CD = self._CD_0 + self._CD_alpha * abs(alpha) + self._CD_alpha2 * alpha**2
+        carb.log_info(f"Coeff Drag (CD): {CD:.4f}")
         
         # ==========================================
         # SIDE FORCE COEFFICIENT
         # ==========================================
         CY = self._CY_beta * beta + self._CY_rudder * self._rudder
+        carb.log_info(f"Coeff Side (CY): {CY:.4f} (Control: {self._rudder})")
         
         # ==========================================
         # MOMENT COEFFICIENTS
@@ -371,6 +395,8 @@ class FixedWing(Vehicle):
         
         # Yaw moment (around Z-axis)
         Cn = self._Cn_beta * beta + self._Cn_rudder * self._rudder
+
+        carb.log_info(f"Moment Coeffs: Cl (Roll)={Cl:.4f}, Cm (Pitch)={Cm:.4f}, Cn (Yaw)={Cn:.4f}")
         
         # ==========================================
         # FORCES (Stability frame -> Body frame)
@@ -384,6 +410,8 @@ class FixedWing(Vehicle):
         D = CD * q * self._wing_area
         Y = CY * q * self._wing_area
         
+        carb.log_info(f"Stability Forces: Lift={L:.4f} N, Drag={D:.4f} N, Side={Y:.4f} N")
+
         # Transform from stability to body frame
         # Stability frame is rotated by alpha around Y-axis
         cos_alpha = np.cos(alpha)
@@ -394,6 +422,7 @@ class FixedWing(Vehicle):
         Fz = -D * sin_alpha - L * cos_alpha
         
         forces = np.array([Fx, Fy, Fz])
+        carb.log_info(f"Body Forces: Fx={Fx:.4f}, Fy={Fy:.4f}, Fz={Fz:.4f}")
         
         # ==========================================
         # MOMENTS
@@ -403,6 +432,9 @@ class FixedWing(Vehicle):
         Mz = Cn * q * self._wing_area * self._wing_span
         
         moments = np.array([Mx, My, Mz])
+        carb.log_info(f"Body Moments: Mx={Mx:.4f}, My={My:.4f}, Mz={Mz:.4f}")
+
+        carb.log_info(f"--- Aerodynamics Cycle Ends ---\n\n")
         
         return forces, moments
 
