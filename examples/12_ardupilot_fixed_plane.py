@@ -84,15 +84,15 @@ class FixedWingApp:
         config = FixedWingConfig()
         
         # Propeller/Motor settings
-        config.prop_max_thrust = 10000.0          # Maximum thrust in Newtons
+        config.prop_max_thrust = 1000.0          # Maximum thrust in Newtons
         config.prop_max_rpm = 10000.0          # Maximum RPM
         config.prop_thrust_coefficient = 0.000075  # Thrust coefficient
         config.prop_rotation_dir = 1           # 1: CCW, -1: CW
         
         # Aircraft geometry
         config.wing_area = 0.65                # Wing area (m²)
-        config.wing_span = 3.0                 # Wing span (m)
-        config.chord = 0.22                    # Mean aerodynamic chord (m)
+        config.wing_span = 4.46                 # Wing span (m)
+        config.chord = 0.53                    # Mean aerodynamic chord (m)
         
         # Aerodynamic coefficients (adjust based on your aircraft)
         config.CL_0 = 0.3                      # Zero AoA lift coefficient

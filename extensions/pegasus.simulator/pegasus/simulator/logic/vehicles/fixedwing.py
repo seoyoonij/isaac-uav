@@ -242,8 +242,9 @@ class FixedWing(Vehicle):
         
         # 3. Calculate aerodynamic forces and moments
         aero_forces, aero_moments = self._calculate_aerodynamics()
-        aero_forces = [f * (-1) for f in aero_forces]
-        aero_moments = [f * (-1) for f in aero_moments]
+
+        # aero_forces = [f * (-1) for f in aero_forces]
+        # aero_moments = [f * (-1) for f in aero_moments]
 
         carb.log_info(f"Calculated Aero Force: {aero_forces}")
         carb.log_info(f"Calculated Aero Moment: {aero_moments}")
@@ -439,6 +440,15 @@ class FixedWing(Vehicle):
         carb.log_info(f"Body Moments: Mx={Mx:.4f}, My={My:.4f}, Mz={Mz:.4f}")
 
         carb.log_info(f"--- Aerodynamics Cycle Ends ---\n\n")
+        R_correction = np.array([
+            [ 0,  1,  0],  # New X = Old Y  (Left)
+            [-1,  0,  0],  # New Y = -Old X (Back)
+            [ 0,  0,  1]   # New Z = Old Z  (Up)
+        ])
+
+        # Apply rotation to forces and moments
+        forces = R_correction @ forces
+        moments = R_correction @ moments
         
         return forces, moments
 
