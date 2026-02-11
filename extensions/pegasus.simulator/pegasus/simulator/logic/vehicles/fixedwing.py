@@ -244,35 +244,43 @@ class FixedWing(Vehicle):
         """
         pass
 
-    def update(self, dt: float):
-        # ... backend updates ...
-        self._update_control_inputs()
-
+    def update_debug(self, dt: float):
         # 2. Get real-time values from the GUI
-        # forces = [x, y, z], torques = [roll, pitch, yaw]
+        # forces = [x, y, z] (Body Frame), torques = [roll, pitch, yaw] (Body Frame)
         pos = self._state.position
-        forces, torques = self.force_ui.get_inputs()
+        forces_body, torques_body = self.force_ui.get_inputs()
+        
+        # Transform inputs from Body frame to Inertial/World frame
+        # The vehicle's attitude is a quaternion [qx, qy, qz, qw]
+        # We use scipy.spatial.transform.Rotation to rotate the vectors
+        r = Rotation.from_quat(self._state.attitude)
+        
+        # Apply rotation to body frame vectors to get global frame vectors
+        # Convert to list for compatibility with apply_force/draw_vector
+        forces_global = r.apply(forces_body).tolist()
+        torques_global = r.apply(torques_body).tolist()
 
-        # 3. Visualize
+        # 3. Visualize (Show the global force vector being applied)
         # Clear previous frame's lines so they don't smear
         self.debug_drawer.clear()
         
         # Draw Force Vector (Red) - Scaled down so it fits in view
-        self.debug_drawer.draw_vector(pos, forces, color=(1, 0, 0, 1), scale=0.1)
+        # We draw the global force vector at the current position
+        self.debug_drawer.draw_vector(pos, forces_global, color=(1, 0, 0, 1), scale=0.1)
         
         # Draw Torque Vector (Blue) - Offset slightly so it doesn't overlap
         offset_pos = [pos[0], pos[1], pos[2] + 0.2]
-        self.debug_drawer.draw_vector(offset_pos, torques, color=(0, 0, 1, 1), scale=0.2)
+        self.debug_drawer.draw_vector(offset_pos, torques_global, color=(0, 0, 1, 1), scale=0.1)
 
-        # 3. Apply them to your object
+        # 4. Apply them to your object (Vehicle.apply_force expects global frame inputs)
         # Note: Ensure your backend supports these list formats
-        self.apply_force(forces)
-        self.apply_torque(torques)
+        self.apply_force(forces_global)
+        self.apply_torque(torques_global)
 
         for backend in self._backends:
             backend.update(dt)
 
-    def update2(self, dt: float):
+    def update(self, dt: float):
         """
         Main update loop - computes and applies aerodynamic forces and moments
         This is called at every physics step.
@@ -285,14 +293,19 @@ class FixedWing(Vehicle):
         
         # 1. Get control inputs from backend
         self._update_control_inputs()
-        
-        # 2. Calculate propeller thrust
+
+        pos = self._state.position
+        offset_pos = [pos[0], pos[1], pos[2] + 0.2]
+
+        self.debug_drawer.clear()
+
+        r = Rotation.from_quat(self._state.attitude)
+
         thrust_force = self._calculate_propeller_thrust()
-        carb.log_info(f"Calculated Thrust: {thrust_force}")
-        
-        # 3. Calculate aerodynamic forces and moments
+        thrust_force = r.apply(thrust_force).tolist()
         aero_forces, aero_moments = self._calculate_aerodynamics()
 
+        carb.log_info(f"Calculated Thrust: {thrust_force}")
         carb.log_info(f"Calculated Aero Force: {aero_forces}")
         carb.log_info(f"Calculated Aero Moment: {aero_moments}")
 
@@ -318,10 +331,15 @@ class FixedWing(Vehicle):
                 self._log_file.flush()
             except Exception as e:
                 carb.log_warn(f"Failed to log forces: {e}")
-        
+
+
+        self.debug_drawer.draw_vector(pos, thrust_force, color=(1, 0, 0, 1), scale=0.1)
+        self.debug_drawer.draw_vector(pos, aero_forces, color=(1, 1, 0, 1), scale=0.1)
+        self.debug_drawer.draw_vector(offset_pos, aero_moments, color=(0, 0, 1, 1), scale=0.1)
+
         # 4. Apply propeller thrust (in body frame, pointing forward)
         # self.apply_force([0.0, -thrust_force, 0.0], body_part="/body")
-        self.apply_force([thrust_force, 0.0, 0.0], body_part="/body")
+        self.apply_force(thrust_force, body_part="/body")
         
         # # 5. Apply aerodynamic forces
         self.apply_force(aero_forces, body_part="/body")
@@ -396,7 +414,7 @@ class FixedWing(Vehicle):
         # Limit to maximum thrust
         thrust = np.clip(thrust, 0.0, self._prop_max_thrust)
         
-        return thrust
+        return np.array([thrust, 0, 0])
 
     def _calculate_aerodynamics(self):
         """

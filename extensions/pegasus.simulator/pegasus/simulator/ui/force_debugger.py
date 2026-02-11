@@ -104,7 +104,7 @@ class DebugVisualizer:
         
         # Draw the main line
         # draw_lines takes lists of start/end points to support batching
-        self._draw.draw_lines([start], [end], [color], [2.0]) # 2.0 is thickness
+        self._draw.draw_lines([start], [end], [color], [5.0]) # 2.0 is thickness
 
     def clear(self):
         self._draw.clear_lines()
