@@ -93,7 +93,11 @@ class FixedWingApp:
         config.Cn_rudder = -0.05               # Rudder yaw moment
 
         # Simulation
-        config.simulation_mode = 'autonomous' # autonomous, thrust_only
+        # Manual      : User provides forces. Aerodynamics are NOT calculated. Useful for frame debugging.
+        # Thrust Only : User provides forces. Aerodynamics are calculated. Useful for Aerodynamics Coefficient debugging
+        # Autonomous  : Needs backend, no user control needed. Aerodynamics are calculated. Production mode.
+        config.simulation_mode = 'autonomous' # autonomous, thrust_only, manual
+        #config.debug_mode = True
         
         ardupilot_config = ArduPilotMavlinkBackendConfig({
             "vehicle_id": 0,

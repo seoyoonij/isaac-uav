@@ -151,6 +151,7 @@ class FixedWingConfig:
         # - "manual": direct UI body-frame force/torque only
         # Backward compatibility: "full" is treated as "autonomous".
         self.simulation_mode = "autonomous"
+        self.debug_mode = False
 
         # Optional fallback mass for diagnostics when USD mass cannot be read.
         self.mass_kg = 1.0
@@ -276,8 +277,11 @@ class FixedWing(Vehicle):
         self._prop_joint_handle = None
         self._prop_joint_resolved = False
 
-        self.force_ui = ForceControlWindow()
+        if config.simulation_mode != 'autonomous':
+            self.force_ui = ForceControlWindow()
+
         self.debug_drawer = DebugVisualizer()
+
 
         # Initialize CSV logging
         self._log_file_path = "forces_log.csv"
@@ -421,13 +425,17 @@ class FixedWing(Vehicle):
         beta = np.arcsin(np.clip(-v / V, -1.0, 1.0)) if V > 0.1 else 0.0
 
         mode = self._simulation_mode
+        r = Rotation.from_quat(self._state.attitude)
+
+        def _to_world(vec):
+            return r.apply(np.asarray(vec, dtype=float)).tolist()
+
         if mode == "manual":
             forces_body, torques_body = self.force_ui.get_inputs()
             forces_body = np.clip(forces_body, MIN_FORCE, MAX_FORCE)
             torques_body = np.clip(torques_body, MIN_MOMENTS, MAX_MOMENTS)
-
-            self.debug_drawer.draw_vector(pos, forces_body, color=(1, 0, 0, 1), scale=0.1)
-            self.debug_drawer.draw_vector(offset_pos, torques_body, color=(0, 0, 1, 1), scale=0.1)
+            self.debug_drawer.draw_vector(pos, _to_world(forces_body), color=(1, 0, 0, 1), scale=0.1)
+            self.debug_drawer.draw_vector(offset_pos, _to_world(torques_body), color=(0, 0, 1, 1), scale=0.1)
 
             self.apply_force(forces_body, body_part="/body")
             self.apply_torque(torques_body, body_part="/body")
@@ -462,10 +470,10 @@ class FixedWing(Vehicle):
             total_moments = np.clip(aero_moments + manual_pitch_torque, MIN_MOMENTS, MAX_MOMENTS)
             drag_force = np.clip(self._drag.update(self._state, dt), MIN_FORCE, MAX_FORCE)
 
-            self.debug_drawer.draw_vector(pos, thrust_force, color=(1, 0, 0, 1), scale=0.1)
-            self.debug_drawer.draw_vector(pos, aero_forces, color=(1, 1, 0, 1), scale=0.1)
-            self.debug_drawer.draw_vector(offset_pos, total_moments, color=(0, 0, 1, 1), scale=0.1)
-            self.debug_drawer.draw_vector(offset_pos, drag_force, color=(0, 1, 1, 1), scale=0.1)
+            self.debug_drawer.draw_vector(pos, _to_world(thrust_force), color=(1, 0, 0, 1), scale=0.1)
+            self.debug_drawer.draw_vector(pos, _to_world(aero_forces), color=(1, 1, 0, 1), scale=0.1)
+            self.debug_drawer.draw_vector(offset_pos, _to_world(total_moments), color=(0, 0, 1, 1), scale=0.1)
+            self.debug_drawer.draw_vector(offset_pos, _to_world(drag_force), color=(0, 1, 1, 1), scale=0.1)
 
             self.apply_force(thrust_force, body_part="/body")
             self.apply_force(aero_forces, body_part="/body")
@@ -499,10 +507,12 @@ class FixedWing(Vehicle):
             aero_moments = np.clip(data['moments'], MIN_MOMENTS, MAX_MOMENTS)
             drag_force = np.clip(self._drag.update(self._state, dt), MIN_FORCE, MAX_FORCE)
 
-            self.debug_drawer.draw_vector(pos, thrust_force, color=(1, 0, 0, 1), scale=0.1)
-            self.debug_drawer.draw_vector(pos, aero_forces, color=(1, 1, 0, 1), scale=0.1)
-            self.debug_drawer.draw_vector(offset_pos, aero_moments, color=(0, 0, 1, 1), scale=0.1)
-            self.debug_drawer.draw_vector(offset_pos, drag_force, color=(0, 1, 1, 1), scale=0.1)
+            # Activate draw vectors only in debug mode for fully autonomous functionality.
+            if self._config.debug_mode:
+                self.debug_drawer.draw_vector(pos, _to_world(thrust_force), color=(1, 0, 0, 1), scale=0.1)
+                self.debug_drawer.draw_vector(pos, _to_world(aero_forces), color=(1, 1, 0, 1), scale=0.1)
+                self.debug_drawer.draw_vector(offset_pos, _to_world(aero_moments), color=(0, 0, 1, 1), scale=0.1)
+                self.debug_drawer.draw_vector(offset_pos, _to_world(drag_force), color=(0, 1, 1, 1), scale=0.1)
 
             self.apply_force(thrust_force, body_part="/body")
             self.apply_force(aero_forces, body_part="/body")
