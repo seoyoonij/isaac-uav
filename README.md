@@ -1,8 +1,9 @@
 # Isaac UAV
 
 **Isaac UAV** is a fixed-wing UAV simulation stack built on [Isaac Sim](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/overview.html) and [Pegasus Simulator](https://pegasussimulator.github.io/PegasusSimulator/).  
-It supports aerodynamic force and moment simulation, interactive force debugging, and backend-driven flight through ArduPilot.
+It supports aerodynamic force and moment simulation, interactive force debugging, and backend-driven flight through ArduPilot. [Checkout the Demo.](https://youtu.be/x342-TC76Sw?si=QGYIJR8t6J6wmSoF)
 
+[![DEMO](docs/_static/banner2.png)](https://youtu.be/x342-TC76Sw?si=QGYIJR8t6J6wmSoF)
 
 <table style="width: 100%; text-align: center;">
   <tr>
