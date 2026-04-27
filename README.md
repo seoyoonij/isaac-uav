@@ -107,9 +107,8 @@ This repository is a fixed-wing-focused fork that builds on the original Pegasus
   * [Tomer Tiplitsky](https://github.com/TomerTip)
   * [Tanner Gilbert](https://github.com/TannerGilbert)
   * [Seunghwan Jo](https://github.com/SwiftGust)
-* Fixed-UAV Integration
+* Fixed-Wing UAV Integration
   * [Ahmed Zeer](https://github.com/AhmedZeer)
-  * [Mert Colpan](https://github.com/mertColpan)
 
 ## Citation
 
