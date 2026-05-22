@@ -3,7 +3,7 @@
 2. Tell IsaacSim's python where UAV code lives
   - ``cd C:\isaac-uav\extensions``
       ``C:\isaac-sim\python.bat -m pip install --editable pegasus.simulator``
-  - or if error, directly inject path in .py files (e.g. example_12 line 23)
+  - or if error, directly inject path in .py files before Pegasus imports (e.g. example_12 line 23)
 3. Launch simulation
   - ``cd C:\isaac-uav``
   - ``C:\isaac-sim\python.bat examples\12_ardupilot_fixedwing.py``
