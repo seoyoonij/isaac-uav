@@ -52,13 +52,14 @@ class TailsitterConfig:
     def __init__(self):
         """
         Initialization of the TailsitterConfig class
+        Adapted from fixedwing.py
         """
 
         # Stage prefix of the vehicle when spwaning in the world
         self.stage_prefix = "tailsitter"
         # self.usd_file = ROBOTS["Tailsitter"]
 
-        # Rotor model
+        # ROTOR CONFIG
         self.num_rotors = 2
         self.rotor_positions = [...]
         self.rotor_axes = [...]
@@ -67,29 +68,77 @@ class TailsitterConfig:
         self.thrust_curve = ...
         self.torque_coefficient = ...
 
-        # Basic aero
+        # AIRCRAFT GEOMETRY
         self.wing_area = ...
         self.wing_span = ...
         self.chord = ...
-        self.CL_0 = ...
-        self.CL_alpha = ...
-        self.CL_max = ...
-        self.CD_0 = ...
-        self.Cm_alpha = ...
+        self.air_density = 1.225 # kg/m^3 at sea level
+        self.aero_center = ... # aerodynamic center for force application in body frame (m)
 
-        # Control surfaces
-        self.Cm_elevator = ...
-        self.Cl_aileron = ...
-        self.Cn_rudder = ...
+        # AERODYNAMIC FORCE MODEL
+        self.CL_0 = ... # Zero angle-of-attack lift coefficient
+        self.CL_alpha = ... # Lift curve slope (per radian)
+        self.CL_max = ... # Maximum lift coefficient (stall limit)
 
-        # Transition
+        self.CD_0 = ... # Zero-lift drag coefficient (parasitic drag)
+        self.CD_alpha = ... # Drag due to angle-of-attack (induced drag)
+        self.CD_alpha2 = ... # Quadratic drag for high angles of attack
+
+        self.Cy_beta = ... # Side force due to sideslip
+
+        self.Cm_0 = ... # Zero angle-of-attack pitching moment coefficient
+        self.Cm_alpha = ... # Pitching moment due to angle-of-attack
+
+        self.Cl_beta = ... # Roll moment due to sideslip
+        self.Cl_p = ... # Roll damping due to roll rate
+        self.Cl_r = ... # Roll-yaw coupling due to yaw rate
+
+        self.Cn_beta = ... # Yaw moment due to sideslip
+        self.Cn_p = ... # Yaw-roll coupling due to roll rate    
+        self.Cn_r = ... # Yaw damping due to yaw rate
+
+        self.Cm_q = ... # Pitch damping due to pitch rate
+
+        # CONTROL SURFACE MOMENTS
+        self.Cl_aileron = ... # Roll moment
+        self.Cm_elevator = ... # Pitch moment
+        self.Cn_rudder = ... # Yaw moment
+
+        self.CL_elevator = ... # Lift change due to elevator (pitch in hover)
+        self.CY_rudder = ... # Side force due to rudder (sideslip in hover)
+        
+        # # if tailless, below instead:
+        # self.Cm_elevon = ... # Total pitch moment
+        # self.Cl_elevon_diff = ... # Roll in hover, Yaw in cruise
+        # self.Cl_elevon_sym = ... # Pitch in hover
+        # self.Cn_elevon_diff = ... # Rudder against adverse yaw: slip due to higher lift, higher drag
+
+        # DRAG CONFIG
+        self.drag = LinearDrag([0.1, 0.1, 0.1]) # linear drag for body frame drag effects
+
+        # TRANSITION CONFIG
         self.transition_airspeed = ...
         self.hover_blend_airspeed = ...
-        self.forward_blend_airspeed = ...
+        self.cruise_blend_airspeed = ...
+        self.transition_duration = ...
+        # TODO whatelse
 
-        # Sensors / backends
-        self.sensors = [...]
-        self.backends = [...]
+        # SENSORS
+        self.sensors = [Barometer(), IMU(), Magnetometer(), GPS()]
+        self.graphical_sensors = []
+        self.graphs = []
+
+        # CONTROL BACKENDS
+        self.backends = []
+
+        # SIMULATION MODE
+        # Modes:
+        # - hover
+        # - transition_blend
+        # - cruise
+        # - manual
+        self.simulation_mode = 'manual'
+        self.debug_mode = False
 
 class Tailsitter(Vehicle):
     """
@@ -102,7 +151,8 @@ class Tailsitter(Vehicle):
         # TODO: do i want inheritance from parent?
 
     def update(self, dt):
-        # Call the base class update to handle backend communication and sensor updates
+        # Adapted from multirotor.py
+        # Handle backend communication and sensor updates for physics simulation
         super().update(dt)
 
         # commands = self.get_commands_from_backend()
