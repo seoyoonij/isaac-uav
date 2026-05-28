@@ -118,7 +118,14 @@ class Tailsitter(Vehicle):
     def update(self, dt:float):
         # Adapted from multirotor.py
         # Handle backend communication and sensor updates for physics simulation
-        self.apply_force([0.0, 0.0, 20.0], body_part = "/body" )  # Placeholder for actual force application logic
-        for backend in self._backends:
-            backend.update(dt)
-        pass
+       
+        '''force/thrust axis test'''
+        self.apply_force([20.0, 0.0, 0.0], body_part = "/body" )
+        '''
+        Body Force [+x, +y, +z] = world [+x, ?, -x]
+        Body Torque [+x, +y, +z] = world [?, ?, ?] r/p/y dir
+        '''
+
+        # for backend in self._backends:
+        #     backend.update(dt)
+        
