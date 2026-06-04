@@ -121,7 +121,7 @@ class FixedWingPX4App:
             "vehicle_id": 0,
             "px4_autolaunch": False, # Launch PX4 manually in WSL2
             "px4_dir": self.pg.px4_path,
-            "px4_vehicle_model": "none_iris"
+            "px4_vehicle_model": "none_plane" # Use custom PX4 airframe 'none_plane' for fixed-wing
         })
         
         # Combine backends
