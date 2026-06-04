@@ -22,7 +22,7 @@ simulation_app = SimulationApp({"headless": False})
 import omni.timeline
 from omni.isaac.core.world import World
 
-# Ensure the local extension sources are imported before any installed pegasus package
+# Import local extension sources before any installed pegasus package
 from pathlib import Path
 import sys
 repo_root = Path(__file__).resolve().parents[1]

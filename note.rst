@@ -7,6 +7,8 @@
 3. Launch simulation
   - ``cd C:\isaac-uav``
   - ``C:\isaac-sim\python.bat examples\12_ardupilot_fixedwing.py``
+  - or ``C:\isaac-uav\app\isaac-sim.bat --ext-folder C:\isaac-uav\extensions``
+
 
 # Fixed-wing UAV specific files
 1. USD assets: ``extensions\pegasus\simulator\assets\Robots\fixed_wing`` 
@@ -16,7 +18,18 @@
   ``ROBOTS = {"Iris": ROBOTS_ASSETS + "/Iris/iris.usd",
           "Fixed Wing": ROBOTS_ASSETS + "/fixed_wing/fixed_wing.usd",
           "Flying Cube": ROBOTS_ASSETS + "/yoda_fixed_wing/cube.usd",}``
-          
+
+# Setting up PX4 SITL
+1. Install PX4 in Ubuntu, configure ip address
+2. skip this: (if needed: Update line 219 ``extensions\pegasus\simulator\logic\backends\px4_mavlink_backend.py`` with correct IP and port for MAVLink connection
+    e.g. ``self.connection_ip = self.config.get("connection_ip", "172.25.145.97")``)
+3. Launch PX4 on WSL2 using 
+    ``cd ~/isaac_sim_project/PX4-Autopilot
+      make px4_sitl_default none_iris``   
+   QGroundControl autoconnects. 
+   Then spawn simulation on Pegasus.
+
+
 # TailsitterConfig parameters to add:
   # self.usd_file = ROBOTS["Tailsitter"]
 
