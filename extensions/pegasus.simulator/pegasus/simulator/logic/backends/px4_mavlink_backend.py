@@ -838,12 +838,18 @@ class PX4MavlinkBackend(Backend):
         if mode == mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED + 1:
 
             carb.log_info("Parsing control input")
+            self._armed = True 
+
+            # Debug
+            #carb.log_warn(f"PX4 raw controls: {list(controls[:8])}")
+            carb.log_warn(f"PX4 raw controls: {list(controls[:8])} (Roll: {controls[0]:.2f} | Pitch: {controls[1]:.2f} | Throttle: {controls[3]:.2f})")
 
             # Set the rotor target speeds
             self._rotor_data.update_input_reference(controls)
 
         # If the vehicle is not armed, do not rotate the propellers
         else:
+            self._armed = False
             self._rotor_data.zero_input_reference()
 
     def update_graphical_sensor(self, sensor_type: str, data):

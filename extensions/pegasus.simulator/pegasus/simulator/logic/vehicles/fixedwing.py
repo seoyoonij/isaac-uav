@@ -559,6 +559,8 @@ class FixedWing(Vehicle):
             return
 
         raw_inputs = np.asarray(raw_inputs, dtype=float)
+        # temporary debug
+        carb.log_warn(f"RAW inputs: {raw_inputs[:4]}")
 
         # If backend is disarmed (or publishes all-zero references while waiting for first commands),
         # force neutral controls to avoid spurious pre-arm thrust/surface inputs.
