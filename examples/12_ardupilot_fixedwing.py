@@ -20,14 +20,26 @@ simulation_app = SimulationApp({"headless": False})
 import omni.timeline
 from omni.isaac.core.world import World
 
-# Import the Pegasus API for simulating vehicles
+# Ensure the local extension sources are imported before any installed pegasus package
+from pathlib import Path
+import sys
+repo_root = Path(__file__).resolve().parents[1]
+utils_dir = Path(__file__).resolve().parent / "utils"
+uav_extensions = repo_root / "extensions"
+uav_simulator = uav_extensions / "pegasus.simulator"
+
+for p in (utils_dir, uav_extensions, uav_simulator):
+    p_str = str(p)
+    if p_str not in sys.path:
+        sys.path.insert(0, p_str)
+
+# Import the Pegasus API and ArduPilot flight control backend
 from pegasus.simulator.params import SIMULATION_ENVIRONMENTS, ROBOTS
 from pegasus.simulator.logic.backends.ardupilot_mavlink_backend import (
-    ArduPilotMavlinkBackend, ArduPilotMavlinkBackendConfig
-)
-
-from pegasus.simulator.logic.backends.ros2_backend import ROS2Backend
+    ArduPilotMavlinkBackend, ArduPilotMavlinkBackendConfig)
 from pegasus.simulator.logic.interface.pegasus_interface import PegasusInterface
+# Removed ROS2 backend import:
+# from pegasus.simulator.logic.backends.ros2_backend import ROS2Backend
 
 from scipy.spatial.transform import Rotation
 
@@ -101,7 +113,10 @@ class FixedWingApp:
         
         ardupilot_config = ArduPilotMavlinkBackendConfig({
             "vehicle_id": 0,
-            "ardupilot_autolaunch": True,
+            "ardupilot_autolaunch": False, # running Arudpilot inside Cygwin
+            "connection_type": "udpin",
+            "connection_ip": "127.0.01",
+            "connection_baseport": 14550, # MAVProxy broadcast port
             "ardupilot_dir": self.pg.ardupilot_path,
             "ardupilot_vehicle_model": "plane",
             "ardupilot_vehicle" : "ArduPlane"
