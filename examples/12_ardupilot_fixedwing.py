@@ -115,9 +115,8 @@ class FixedWingApp:
             "vehicle_id": 0,
             "ardupilot_autolaunch": False, # running Arudpilot inside Cygwin
             "connection_type": "udpin",
-            "connection_ip": "127.0.01",
-            "connection_baseport": 14550, # MAVProxy broadcast port
-            "ardupilot_dir": self.pg.ardupilot_path,
+            "connection_ip": "127.0.0.1",
+            "connection_baseport": 14551, # MAVProxy broadcast port to IsaacSim (14550 for MissionPlanner)
             "ardupilot_vehicle_model": "plane",
             "ardupilot_vehicle" : "ArduPlane"
         })
