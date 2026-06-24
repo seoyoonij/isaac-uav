@@ -44,3 +44,58 @@
       make px4_sitl_default none_iris``   
    QGroundControl autoconnects. 
    Then spawn simulation on Pegasus.
+---
+
+# Aerodynamics model assumptions
+[Ardupilot] --MAVLink/Json-- [Pegasus] --scaling-- [IsaacSim] --aerodynamics
+
+    - Ignoring physical joints
+    - Treats 3d model as ghost asset (not identical reflection of physical shape)
+    - Vehicles are abstracted with aerodynamic parameters
+
+
+# Launching with Hercules files
+1. Intially, IsaacSim was installed on Windows. It has ``python.bat``
+2. Hercules setup.sh was written for Linux host. When prompting Isaac Sim install directory, it looks for ``python.sh``
+3. Thus during initial setup,  
+    (Cygwin64 terminal)
+    `` /cygdrive/c/Hercules_Isaac``
+    ``$ ./setup.sh ``
+    create a dummy file just for setup (When running sim on Windows, batch execution will look for ``python.bat`` anyways) so 
+    ``touch /cygdrive/c/isaac-sim/python.sh``
+    ``chmod +x /cygdrive/c/isaac-sim/python.sh``
+4. Then in setup, 
+    "Enter Isaac Sim install directory [/home/crrl/isaacsim]:"  ``/cygdrive/c/isaac-sim``
+    "Enter ArduPilot source directory [/home/crrl/ardupilot]:" /cygdrive/c/ardupilot_workspace/ardupilot
+
+5. Since Isaac Sim is running in Windows in this case, manually open ``.env.local`` and inject the paths in Windows syntax.
+    ```
+    ISAACSIM_PATH=C:\isaac-sim
+    ISAACSIM_PYTHON=C:\isaac-sim\python.bat
+    ISAACSIM=C:\isaac-sim\isaac-sim.bat
+    ARDUPILOT_DIR=C:\ardupilot_workspace\ardupilot
+    ARDUPILOT_PYTHON=python3
+    ```
+
+6. Ensure local extension sources are imported before any installed pegasus package: ``21_ardupilot_hercules_exp.py`` (line 24)
+    ```
+    from pathlib import Path
+    import sys
+    repo_root = Path(__file__).resolve().parents[1]
+    utils_dir = Path(__file__).resolve().parent / "utils"
+    uav_extensions = repo_root / "extensions"
+    uav_simulator = uav_extensions / "pegasus.simulator"
+
+    for p in (utils_dir, uav_extensions, uav_simulator):
+        p_str = str(p)
+        if p_str not in sys.path:
+            sys.path.insert(0, p_str)
+
+    ```
+
+7. Launch IsaacSim using Hercules
+    ``cd C:\Hercules_Isaac``
+    ``C:\isaac-sim\python.bat examples\21_ardupilot_hercules_exp.py``
+    n.b. IsaacSim tries autolaunching ArduPilot, crashes on Windows' os.setsid error, abandons auto-launch, then proceeds with main loop anyway.
+
+    
